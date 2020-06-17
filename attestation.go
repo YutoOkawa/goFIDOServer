@@ -49,15 +49,16 @@ func attestationOptions(w http.ResponseWriter, r *http.Request) {
 
 	// レスポンスの設定
 	options.Status = "ok"
-	// options.Challenge =
+	options.Challenge = makeRandom(config.ChallengeSize)
 	options.Rp.Id = config.RpId
 	options.Rp.Name = config.RpName
-	// options.User.id =
+	options.User.Id = makeRandom(32)
 	options.User.Name = req.UserName
 	options.User.DisplayName = req.DisplayName
 	options.AuthenticatorSelection.RequireResidentKey = config.RequireResidentKey
 	options.AuthenticatorSelection.AuthenticatorAttachment = config.AuthenticatorAttachment
 	options.AuthenticatorSelection.UserVerificatoin = config.UserVerification
+	options.Attestation = config.Attestation
 	options.Timeout = config.Timeout
 
 	// レスポンスパラメータの設定
