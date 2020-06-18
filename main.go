@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"text/template"
 
 	"github.com/go-chi/chi"
 )
@@ -44,8 +45,17 @@ func init() {
 
 func main() {
 	r := chi.NewRouter()
+	r.Route("/", func(r chi.Router) {
+		r.Get("/", handleIndexTpl)
+	})
 	r.Route("/attestation", func(r chi.Router) {
 		r.Post("/options", attestationOptions)
 	})
 	http.ListenAndServe(":8080", r)
+}
+
+func handleIndexTpl(w http.ResponseWriter, r *http.Request) {
+	// テンプレートをパース
+	tpl := template.Must(template.ParseFiles("index.tpl"))
+	tpl.Execute(w, nil)
 }
