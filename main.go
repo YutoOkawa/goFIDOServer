@@ -33,8 +33,8 @@ var config Config
 func init() {
 	config.ChallengeSize = 64
 	config.RpName = "FIDO_SERVER"
-	config.RpId = "http://localhost:8080"
-	config.RpOrigin = "http://localhost:8080"
+	config.RpId = "localhost/#/register"
+	config.RpOrigin = "localhost/#/register"
 	config.Timeout = 60000
 	config.RequireResidentKey = false
 	config.AuthenticatorAttachment = "cross-platform"

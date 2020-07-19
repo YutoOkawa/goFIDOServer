@@ -17,14 +17,13 @@ type registerOptions struct {
 	Status    string `json:"status"`
 	Challenge string `json:"challenge"`
 	Rp        struct {
-		Id   string `json:"id"`
 		Name string `json:"name"`
 	} `json:"rp"`
 	User struct {
 		Id          string `json:"id"`
 		Name        string `json:"name"`
 		DisplayName string `json:"displayName"`
-	}
+	} `json:"user"`
 	AuthenticatorSelection struct {
 		RequireResidentKey      bool   `json:"requireResidentKey"`
 		AuthenticatorAttachment string `json:"authenticatorAttachment"`
@@ -50,7 +49,6 @@ func attestationOptions(w http.ResponseWriter, r *http.Request) {
 	// レスポンスの設定
 	options.Status = "ok"
 	options.Challenge = makeRandom(config.ChallengeSize)
-	options.Rp.Id = config.RpId
 	options.Rp.Name = config.RpName
 	options.User.Id = makeRandom(32)
 	options.User.Name = req.UserName
