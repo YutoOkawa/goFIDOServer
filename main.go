@@ -1,10 +1,11 @@
 package main
 
 import (
+	"log"
 	"net/http"
-	"text/template"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/cors"
 )
 
 type helloJSON struct {
@@ -45,17 +46,20 @@ func init() {
 
 func main() {
 	r := chi.NewRouter()
-	r.Route("/", func(r chi.Router) {
-		r.Get("/", handleIndexTpl)
-	})
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
 	r.Route("/attestation", func(r chi.Router) {
 		r.Post("/options", attestationOptions)
 	})
-	http.ListenAndServe(":8080", r)
-}
-
-func handleIndexTpl(w http.ResponseWriter, r *http.Request) {
-	// テンプレートをパース
-	tpl := template.Must(template.ParseFiles("index.tpl"))
-	tpl.Execute(w, nil)
+	// http.ListenAndServe(":8080", r)
+	err := http.ListenAndServeTLS(":8080", "ssl/myself.crt", "ssl/myself.key", r)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
