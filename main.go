@@ -56,6 +56,7 @@ func main() {
 	}))
 	r.Route("/attestation", func(r chi.Router) {
 		r.Post("/options", attestationOptions)
+		r.Post("/result", attestationResult)
 	})
 	// http.ListenAndServe(":8080", r)
 	err := http.ListenAndServeTLS(":8080", "ssl/myself.crt", "ssl/myself.key", r)

@@ -33,6 +33,19 @@ type registerOptions struct {
 	Timeout     int    `json:"timeout"`
 }
 
+type serverRequest struct {
+	UserName string `json:"username"`
+	Create   struct {
+		Id       string `json:"id"`
+		RawId    string `json:"rawId"`
+		Type     string `json:"type"`
+		Response struct {
+			AttestationObject string `json:"attestationObject"`
+			ClientDataJSON    string `json:"clientDataJSON"`
+		} `json:"response"`
+	} `json:"create"`
+}
+
 func attestationOptions(w http.ResponseWriter, r *http.Request) {
 	var req userRequest
 	var options registerOptions
@@ -64,6 +77,15 @@ func attestationOptions(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(options)
 }
 
-func attestationResult() {
+func attestationResult(w http.ResponseWriter, r *http.Request) {
+	var req serverRequest
 
+	fmt.Println("-----/attestation/result-----")
+	// リクエストパラメータの取得
+	body := r.Body
+	defer body.Close()
+	buf := new(bytes.Buffer)
+	io.Copy(buf, body)
+	json.Unmarshal(buf.Bytes(), &req)
+	fmt.Println(req)
 }
