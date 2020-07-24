@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 )
 
@@ -88,4 +89,18 @@ func attestationResult(w http.ResponseWriter, r *http.Request) {
 	io.Copy(buf, body)
 	json.Unmarshal(buf.Bytes(), &req)
 	fmt.Println(req)
+
+	attestationObject, err := parseAttestationObject(req.Create.Response.AttestationObject)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(attestationObject.Fmt)
+	// fmt.Println(attestationObject.AttStmt.Alg)
+	fmt.Println(attestationObject.AttStmt.Sig)
+	// TODO: ecdaaKeyIdが取得できない
+	fmt.Println(attestationObject.AttStmt.EcdaaKeyId)
+	fmt.Println(attestationObject.AuthData)
+
+	authData := parseAuthData(attestationObject.AuthData)
+	fmt.Println(authData)
 }
