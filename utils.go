@@ -1,23 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/binary"
+	"io"
+	"net/http"
 
-	"github.com/ugorji/go/codec"
+	"github.com/fxamacker/cbor"
 )
 
 type AttestationObject struct {
-	Fmt      string  `codec:"fmt" cbor:"fmt"`
-	AttStmt  AttStmt `codec:"attStmt" cbor:"attStmt"`
-	AuthData []byte  `codec:"authData" cbor:"authData"`
-}
-
-type AttStmt struct {
-	Sig []byte `codec:"sig" cbor:"sig"`
-	// Alg []byte `codec:"alg" cbor:"alg"`
-	EcdaaKeyId []byte `codec:"ecdaaKeyId" cbor:"ecdaaKeyId"`
+	Fmt      string                 `json:"fmt"`
+	AttStmt  map[string]interface{} `json:"attStmt,omitempty"`
+	AuthData []byte                 `json:"authData"`
 }
 
 type AuthData struct {
@@ -40,17 +37,24 @@ func makeRandom(i int) string {
 	return base64.URLEncoding.EncodeToString(b)
 }
 
+func getReqBody(req *http.Request) []byte {
+	body := req.Body
+	defer body.Close()
+	buf := new(bytes.Buffer)
+	io.Copy(buf, body)
+	return buf.Bytes()
+}
+
 func parseAttestationObject(rawAttestationObject string) (*AttestationObject, error) {
 	var attestationObject AttestationObject
-	var ch codec.CborHandle
 
 	attestationBin, err := base64.RawURLEncoding.DecodeString(rawAttestationObject)
 	if err != nil {
 		return nil, err
 	}
 
-	dec := codec.NewDecoderBytes(attestationBin, &ch)
-	if err := dec.Decode(&attestationObject); err != nil {
+	err = cbor.Unmarshal(attestationBin, &attestationObject)
+	if err != nil {
 		return nil, err
 	}
 

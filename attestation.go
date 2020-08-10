@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 )
@@ -25,11 +23,11 @@ type registerOptions struct {
 		Name        string `json:"name"`
 		DisplayName string `json:"displayName"`
 	} `json:"user"`
-	AuthenticatorSelection struct {
-		RequireResidentKey      bool   `json:"requireResidentKey"`
-		AuthenticatorAttachment string `json:"authenticatorAttachment"`
-		UserVerificatoin        string `json:"userVerification"`
-	} `json:"authenticatorSelection"`
+	// AuthenticatorSelection struct {
+	// 	RequireResidentKey      bool   `json:"requireResidentKey"`
+	// 	AuthenticatorAttachment string `json:"authenticatorAttachment"`
+	// 	UserVerificatoin        string `json:"userVerification"`
+	// } `json:"authenticatorSelection"`
 	Attestation string `json:"attestation"`
 	Timeout     int    `json:"timeout"`
 }
@@ -53,11 +51,7 @@ func attestationOptions(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("-----/attestation/options-----")
 	// リクエストパラメータの取得
-	body := r.Body
-	defer body.Close()
-	buf := new(bytes.Buffer)
-	io.Copy(buf, body)
-	json.Unmarshal(buf.Bytes(), &req)
+	json.Unmarshal(getReqBody(r), &req)
 	fmt.Println(req)
 
 	// レスポンスの設定
@@ -67,9 +61,9 @@ func attestationOptions(w http.ResponseWriter, r *http.Request) {
 	options.User.Id = makeRandom(32)
 	options.User.Name = req.UserName
 	options.User.DisplayName = req.DisplayName
-	options.AuthenticatorSelection.RequireResidentKey = config.RequireResidentKey
-	options.AuthenticatorSelection.AuthenticatorAttachment = config.AuthenticatorAttachment
-	options.AuthenticatorSelection.UserVerificatoin = config.UserVerification
+	// options.AuthenticatorSelection.RequireResidentKey = config.RequireResidentKey
+	// options.AuthenticatorSelection.AuthenticatorAttachment = config.AuthenticatorAttachment
+	// options.AuthenticatorSelection.UserVerificatoin = config.UserVerification
 	options.Attestation = config.Attestation
 	options.Timeout = config.Timeout
 
@@ -83,24 +77,16 @@ func attestationResult(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("-----/attestation/result-----")
 	// リクエストパラメータの取得
-	body := r.Body
-	defer body.Close()
-	buf := new(bytes.Buffer)
-	io.Copy(buf, body)
-	json.Unmarshal(buf.Bytes(), &req)
+	json.Unmarshal(getReqBody(r), &req)
 	fmt.Println(req)
 
 	attestationObject, err := parseAttestationObject(req.Create.Response.AttestationObject)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(attestationObject.Fmt)
-	// fmt.Println(attestationObject.AttStmt.Alg)
-	fmt.Println(attestationObject.AttStmt.Sig)
-	// TODO: ecdaaKeyIdが取得できない
-	fmt.Println(attestationObject.AttStmt.EcdaaKeyId)
-	fmt.Println(attestationObject.AuthData)
 
 	authData := parseAuthData(attestationObject.AuthData)
-	fmt.Println(authData)
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(authData)
 }

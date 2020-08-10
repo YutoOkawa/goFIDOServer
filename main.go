@@ -58,7 +58,6 @@ func main() {
 		r.Post("/options", attestationOptions)
 		r.Post("/result", attestationResult)
 	})
-	// http.ListenAndServe(":8080", r)
 	err := http.ListenAndServeTLS(":8080", "ssl/myself.crt", "ssl/myself.key", r)
 	if err != nil {
 		log.Fatal(err)
