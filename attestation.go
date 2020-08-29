@@ -77,8 +77,17 @@ func attestationResult(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("-----/attestation/result-----")
 	// リクエストパラメータの取得
-	json.Unmarshal(getReqBody(r), &req)
+	err := json.Unmarshal(getReqBody(r), &req)
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println(req)
+
+	clientDataJSON, err := parseClientDataJSON(req.Create.Response.ClientDataJSON)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(*clientDataJSON)
 
 	attestationObject, err := parseAttestationObject(req.Create.Response.AttestationObject)
 	if err != nil {
@@ -86,7 +95,8 @@ func attestationResult(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authData := parseAuthData(attestationObject.AuthData)
+	fmt.Println(authData)
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(authData)
+	json.NewEncoder(w).Encode(clientDataJSON)
 }

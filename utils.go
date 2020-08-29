@@ -5,11 +5,18 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/binary"
+	"encoding/json"
 	"io"
 	"net/http"
 
 	"github.com/fxamacker/cbor"
 )
+
+type ClientDataJSON struct {
+	Challenge string `json:"challenge"`
+	Type      string `json:"type"`
+	Origin    string `json:"origin"`
+}
 
 type AttestationObject struct {
 	Fmt      string                 `json:"fmt"`
@@ -43,6 +50,22 @@ func getReqBody(req *http.Request) []byte {
 	buf := new(bytes.Buffer)
 	io.Copy(buf, body)
 	return buf.Bytes()
+}
+
+func parseClientDataJSON(rawClientDataJSON string) (*ClientDataJSON, error) {
+	var clientDataJSON ClientDataJSON
+
+	clientDataJSONBin, err := base64.RawStdEncoding.DecodeString(rawClientDataJSON)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(clientDataJSONBin, &clientDataJSON)
+	if err != nil {
+		return nil, err
+	}
+
+	return &clientDataJSON, nil
 }
 
 func parseAttestationObject(rawAttestationObject string) (*AttestationObject, error) {
