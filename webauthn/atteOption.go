@@ -3,7 +3,10 @@ package webauthn
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+
+	"github.com/YutoOkawa/goFIDOServer/db"
 )
 
 type userRequest struct {
@@ -65,6 +68,10 @@ func AttestationOptions(w http.ResponseWriter, r *http.Request) {
 	// options.AuthenticatorSelection.UserVerificatoin = config.UserVerification
 	options.Attestation = config.Attestation
 	options.Timeout = config.Timeout
+
+	if err := db.InsertDB(options.Challenge, options.User.Id); err != nil {
+		log.Fatal(err)
+	}
 
 	// レスポンスパラメータの設定
 	w.WriteHeader(http.StatusCreated)
