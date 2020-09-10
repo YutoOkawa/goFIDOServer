@@ -40,9 +40,9 @@ func AttestationResult(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(req)
 
 	err = webauthn.AttestationResult(req)
+	fmt.Println(err)
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(req)

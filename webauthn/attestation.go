@@ -1,8 +1,10 @@
 package webauthn
 
 import (
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -20,6 +22,7 @@ type registerOptions struct {
 	Challenge string `json:"challenge"`
 	Rp        struct {
 		Name string `json:"name"`
+		Id   string `json:"id"`
 	} `json:"rp"`
 	User struct {
 		Id          string `json:"id"`
@@ -80,6 +83,7 @@ func createOptions(userName string, displayName string) registerOptions {
 	options.Status = "ok"
 	options.Challenge = makeRandom(config.ChallengeSize)
 	options.Rp.Name = config.RpName
+	options.Rp.Id = config.RpId
 	options.User.Id = makeRandom(32)
 	options.User.Name = userName
 	options.User.DisplayName = displayName
@@ -159,24 +163,44 @@ func AttestationResult(create NavigatorCreate) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(*clientDataJSON)
+	// fmt.Println(*clientDataJSON)
 
-	// TODO: challengeの検証
+	// challengeの検証
+	user, err := db.GetOneDB(*&clientDataJSON.Challenge)
+	if err != nil {
+		return err
+	}
+	fmt.Println("get User", user)
 
 	// attestationObjectのデコード
 	attestationObject, err := parseAttestationObject(create.Create.Response.AttestationObject)
 	if err != nil {
 		return err
 	}
-	fmt.Println(attestationObject)
+	// fmt.Println(attestationObject)
 
 	// TODO: attestationの検証
 
 	// authenticatorDataのパース
 	authData := parseAuthData(attestationObject.AuthData)
-	fmt.Println(authData)
+	// fmt.Println(authData)
 
 	// TODO: 各種パラメータの検証
+	// 1:originの検証
+	if *&clientDataJSON.Origin != config.RpOrigin {
+		return fmt.Errorf("failed to check origin!")
+	}
+	// 2:rpIdの検証
+	rpIdHash := sha256.Sum256([]byte(config.RpId))
+	if hex.EncodeToString(authData.rpIDHash) != hex.EncodeToString(rpIdHash[:]) {
+		return fmt.Errorf("failed to check rpidHash")
+	}
+
+	// 3:typeの検証
+	if *&clientDataJSON.Type != "webauthn.create" {
+		return fmt.Errorf("failed to check type!")
+	}
+	// 4:flagsの検証
 
 	// TODO: 公開鍵の作成
 
