@@ -157,6 +157,40 @@ func parseAuthData(authData []byte) AuthData {
 	return parseAuthData
 }
 
+func verifyPackedFormat(att AttestationObject, clientDataHash []byte, authData AuthData) error {
+	alg, present := att.AttStmt["alg"].(int64)
+	if !present {
+		return fmt.Errorf("Error alg value %d\n", alg)
+	}
+
+	sig, present := att.AttStmt["sig"].([]byte)
+	if !present {
+		return fmt.Errorf("Error signature value %x\n", sig)
+	}
+
+	x5c, x509Present := att.AttStmt["x5c"].([]interface{})
+	if x509Present {
+		return fmt.Errorf("Not Implemented Error: x509 %s", x5c)
+	}
+
+	ecdaaKeyID, ecdaaKeyPresent := att.AttStmt["ecdaaKeyId"].([]byte)
+	if ecdaaKeyPresent {
+		return fmt.Errorf("Not Implemented Error: ecdaa %x", ecdaaKeyID)
+	}
+
+	return verifySelfAttestation(alg, sig, att.AuthData, clientDataHash, authData.attestedCredentialData.credentialPublicKey)
+}
+
+func verifySelfAttestation(alg int64, sig []byte, authData []byte, clientDataHash []byte, pubKey []byte) error {
+	sigData := append(authData, clientDataHash...)
+	fmt.Println(sigData)
+
+	// TODO: 公開鍵を作成する
+
+	// TODO: 署名を検証する
+	return nil
+}
+
 func AttestationResult(create NavigatorCreate) error {
 	// clientDataJSONのデコード
 	clientDataJSON, err := parseClientDataJSON(create.Create.Response.ClientDataJSON)
@@ -179,11 +213,16 @@ func AttestationResult(create NavigatorCreate) error {
 	}
 	// fmt.Println(attestationObject)
 
-	// TODO: attestationの検証
-
 	// authenticatorDataのパース
 	authData := parseAuthData(attestationObject.AuthData)
 	// fmt.Println(authData)
+
+	// TODO: attestationの検証
+	clientDataHash := sha256.Sum256([]byte(create.Create.Response.ClientDataJSON))
+	err = verifyPackedFormat(*attestationObject, clientDataHash[:], authData)
+	if err != nil {
+		return err
+	}
 
 	// TODO: 各種パラメータの検証
 	// 1:originの検証
