@@ -186,6 +186,11 @@ func verifySelfAttestation(alg int64, sig []byte, authData []byte, clientDataHas
 	fmt.Println(sigData)
 
 	// TODO: 公開鍵を作成する
+	publicKey, err := parsePublicKey(pubKey)
+	if err != nil {
+		return err
+	}
+	fmt.Println(publicKey)
 
 	// TODO: 署名を検証する
 	return nil
