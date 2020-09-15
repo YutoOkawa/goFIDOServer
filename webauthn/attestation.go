@@ -157,43 +157,48 @@ func parseAuthData(authData []byte) AuthData {
 	return parseAuthData
 }
 
-func verifyPackedFormat(att AttestationObject, clientDataHash []byte, authData AuthData) error {
+func verifyPackedFormat(att AttestationObject, clientDataHash []byte, authData AuthData) (bool, error) {
 	alg, present := att.AttStmt["alg"].(int64)
 	if !present {
-		return fmt.Errorf("Error alg value %d\n", alg)
+		return false, fmt.Errorf("Error alg value %d\n", alg)
 	}
 
 	sig, present := att.AttStmt["sig"].([]byte)
 	if !present {
-		return fmt.Errorf("Error signature value %x\n", sig)
+		return false, fmt.Errorf("Error signature value %x\n", sig)
 	}
 
 	x5c, x509Present := att.AttStmt["x5c"].([]interface{})
 	if x509Present {
-		return fmt.Errorf("Not Implemented Error: x509 %s", x5c)
+		return false, fmt.Errorf("Not Implemented Error: x509 %s", x5c)
 	}
 
 	ecdaaKeyID, ecdaaKeyPresent := att.AttStmt["ecdaaKeyId"].([]byte)
 	if ecdaaKeyPresent {
-		return fmt.Errorf("Not Implemented Error: ecdaa %x", ecdaaKeyID)
+		return false, fmt.Errorf("Not Implemented Error: ecdaa %x", ecdaaKeyID)
 	}
 
 	return verifySelfAttestation(alg, sig, att.AuthData, clientDataHash, authData.attestedCredentialData.credentialPublicKey)
 }
 
-func verifySelfAttestation(alg int64, sig []byte, authData []byte, clientDataHash []byte, pubKey []byte) error {
+func verifySelfAttestation(alg int64, sig []byte, authData []byte, clientDataHash []byte, pubKey []byte) (bool, error) {
 	sigData := append(authData, clientDataHash...)
 	fmt.Println(sigData)
 
 	// TODO: 公開鍵を作成する
 	publicKey, err := parsePublicKey(pubKey)
 	if err != nil {
-		return err
+		return false, err
 	}
 	fmt.Println(publicKey)
 
 	// TODO: 署名を検証する
-	return nil
+	switch publicKey.(type) {
+	case EC2PublicKey:
+		e := publicKey.(EC2PublicKey)
+		return e.Verify(sig, sigData)
+	}
+	return false, fmt.Errorf("failde to Verify Attestation...")
 }
 
 func AttestationResult(create NavigatorCreate) error {
@@ -224,9 +229,13 @@ func AttestationResult(create NavigatorCreate) error {
 
 	// TODO: attestationの検証
 	clientDataHash := sha256.Sum256([]byte(create.Create.Response.ClientDataJSON))
-	err = verifyPackedFormat(*attestationObject, clientDataHash[:], authData)
+	verify, err := verifyPackedFormat(*attestationObject, clientDataHash[:], authData)
 	if err != nil {
 		return err
+	}
+
+	if !verify {
+		return fmt.Errorf("failed to Verify Attestation")
 	}
 
 	// TODO: 各種パラメータの検証

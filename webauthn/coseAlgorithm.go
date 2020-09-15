@@ -40,3 +40,8 @@ func parsePublicKey(pubkeyBytes []byte) (interface{}, error) {
 		return nil, fmt.Errorf("Not Implemented Error")
 	}
 }
+
+func (e *EC2PublicKey) Verify(sig []byte, sigData []byte) (bool, error) {
+
+	return false, fmt.Errorf("Not Implemented Error")
+}
