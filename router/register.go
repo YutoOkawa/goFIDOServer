@@ -9,6 +9,11 @@ import (
 	"github.com/YutoOkawa/goFIDOServer/webauthn"
 )
 
+type resultResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
 func AttestationOptions(w http.ResponseWriter, r *http.Request) {
 	var req webauthn.UserRequest
 
@@ -33,6 +38,7 @@ func AttestationOptions(w http.ResponseWriter, r *http.Request) {
 
 func AttestationResult(w http.ResponseWriter, r *http.Request) {
 	var req webauthn.NavigatorCreate
+	var res resultResponse
 
 	fmt.Println("-----/attestation/result-----")
 	// リクエストパラメータの取得
@@ -41,9 +47,13 @@ func AttestationResult(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	err = webauthn.AttestationResult(req)
-	fmt.Println(err)
+	if err = webauthn.AttestationResult(req); err != nil {
+		fmt.Println(err)
+	}
+
+	res.Code = -1
+	res.Message = err.Error()
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(req)
+	json.NewEncoder(w).Encode(res)
 }
