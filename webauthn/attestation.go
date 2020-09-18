@@ -3,13 +3,9 @@ package webauthn
 import (
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/binary"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
 
 	"github.com/YutoOkawa/goFIDOServer/db"
-	"github.com/fxamacker/cbor"
 )
 
 type UserRequest struct {
@@ -51,32 +47,6 @@ type NavigatorCreate struct {
 	} `json:"create"`
 }
 
-type ClientDataJSON struct {
-	Challenge string `json:"challenge"`
-	Type      string `json:"type"`
-	Origin    string `json:"origin"`
-}
-
-type AttestationObject struct {
-	Fmt      string                 `json:"fmt"`
-	AttStmt  map[string]interface{} `json:"attStmt,omitempty"`
-	AuthData []byte                 `json:"authData"`
-}
-
-type AuthData struct {
-	rpIDHash               []byte
-	flags                  byte
-	signCount              uint32
-	attestedCredentialData AttestedCredentialData
-}
-
-type AttestedCredentialData struct {
-	aaguid              []byte
-	credIDLen           uint16
-	credID              []byte
-	credentialPublicKey []byte
-}
-
 func createOptions(userName string, displayName string) registerOptions {
 	var options registerOptions
 
@@ -104,57 +74,6 @@ func AttestationOptions(req UserRequest) (registerOptions, error) {
 	}
 
 	return options, nil
-}
-
-func parseClientDataJSON(rawClientDataJSON string) (*ClientDataJSON, error) {
-	var clientDataJSON ClientDataJSON
-
-	clientDataJSONBin, err := base64.RawStdEncoding.DecodeString(rawClientDataJSON)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(clientDataJSONBin, &clientDataJSON)
-	if err != nil {
-		return nil, err
-	}
-
-	return &clientDataJSON, nil
-}
-
-func parseAttestationObject(rawAttestationObject string) (*AttestationObject, error) {
-	var attestationObject AttestationObject
-
-	attestationBin, err := base64.RawURLEncoding.DecodeString(rawAttestationObject)
-	if err != nil {
-		return nil, err
-	}
-
-	err = cbor.Unmarshal(attestationBin, &attestationObject)
-	if err != nil {
-		return nil, err
-	}
-
-	return &attestationObject, nil
-}
-
-func parseAuthData(authData []byte) AuthData {
-	parseAuthData := AuthData{}
-	parseAuthData.rpIDHash = authData[:32]
-	parseAuthData.flags = authData[32]
-	signCount := authData[33:37]
-	parseAuthData.signCount = binary.BigEndian.Uint32(signCount)
-
-	parseAttestedCred := AttestedCredentialData{}
-	parseAttestedCred.aaguid = authData[37:53]
-	credIDLen := authData[53:55]
-	parseAttestedCred.credIDLen = binary.BigEndian.Uint16(credIDLen)
-	parseAttestedCred.credID = authData[55 : 55+parseAttestedCred.credIDLen]
-	parseAttestedCred.credentialPublicKey = authData[55+parseAttestedCred.credIDLen:]
-
-	parseAuthData.attestedCredentialData = parseAttestedCred
-
-	return parseAuthData
 }
 
 func verifyPackedFormat(att AttestationObject, clientDataHash []byte, authData AuthData) (bool, error) {
@@ -185,14 +104,14 @@ func verifySelfAttestation(alg int64, sig []byte, authData []byte, clientDataHas
 	sigData := append(authData, clientDataHash...)
 	fmt.Println(sigData)
 
-	// TODO: 公開鍵を作成する
+	// 公開鍵を作成する
 	publicKey, err := parsePublicKey(pubKey)
 	if err != nil {
 		return false, err
 	}
 	fmt.Println(publicKey)
 
-	// TODO: 署名を検証する
+	// 署名を検証する
 	switch publicKey.(type) {
 	case EC2PublicKey:
 		e := publicKey.(EC2PublicKey)
@@ -210,11 +129,9 @@ func AttestationResult(create NavigatorCreate) error {
 	// fmt.Println(*clientDataJSON)
 
 	// challengeの検証
-	user, err := db.GetOneDB(*&clientDataJSON.Challenge)
-	if err != nil {
+	if err := verifyChallenge(*&clientDataJSON.Challenge); err != nil {
 		return err
 	}
-	fmt.Println("get User", user)
 
 	// attestationObjectのデコード
 	attestationObject, err := parseAttestationObject(create.Create.Response.AttestationObject)
@@ -227,7 +144,7 @@ func AttestationResult(create NavigatorCreate) error {
 	authData := parseAuthData(attestationObject.AuthData)
 	// fmt.Println(authData)
 
-	// TODO: attestationの検証
+	// Attestationの検証
 	clientData, err := base64.RawURLEncoding.DecodeString(create.Create.Response.ClientDataJSON)
 	if err != nil {
 		return fmt.Errorf("failed to decode clientDataJSON")
@@ -237,27 +154,14 @@ func AttestationResult(create NavigatorCreate) error {
 	if err != nil {
 		return err
 	}
-
 	if !verify {
 		return fmt.Errorf("failed to Verify Attestation")
 	}
 
-	// TODO: 各種パラメータの検証
-	// 1:originの検証
-	if *&clientDataJSON.Origin != config.RpOrigin {
-		return fmt.Errorf("failed to check origin!")
+	// 各種パラメータの検証
+	if err := verifyParameters(*clientDataJSON, authData); err != nil {
+		return err
 	}
-	// 2:rpIdの検証
-	rpIdHash := sha256.Sum256([]byte(config.RpId))
-	if hex.EncodeToString(authData.rpIDHash) != hex.EncodeToString(rpIdHash[:]) {
-		return fmt.Errorf("failed to check rpidHash")
-	}
-
-	// 3:typeの検証
-	if *&clientDataJSON.Type != "webauthn.create" {
-		return fmt.Errorf("failed to check type!")
-	}
-	// 4:flagsの検証
 
 	// TODO: 公開鍵の作成
 
