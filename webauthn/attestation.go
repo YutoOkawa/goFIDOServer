@@ -228,7 +228,11 @@ func AttestationResult(create NavigatorCreate) error {
 	// fmt.Println(authData)
 
 	// TODO: attestationの検証
-	clientDataHash := sha256.Sum256([]byte(create.Create.Response.ClientDataJSON))
+	clientData, err := base64.RawURLEncoding.DecodeString(create.Create.Response.ClientDataJSON)
+	if err != nil {
+		return fmt.Errorf("failed to decode clientDataJSON")
+	}
+	clientDataHash := sha256.Sum256(clientData)
 	verify, err := verifyPackedFormat(*attestationObject, clientDataHash[:], authData)
 	if err != nil {
 		return err

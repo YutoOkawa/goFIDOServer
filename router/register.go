@@ -51,8 +51,13 @@ func AttestationResult(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 
-	res.Code = -1
-	res.Message = err.Error()
+	if err != nil {
+		res.Code = -1
+		res.Message = err.Error()
+	} else {
+		res.Code = 0
+		res.Message = "Success!"
+	}
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(res)
