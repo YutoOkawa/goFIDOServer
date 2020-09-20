@@ -69,7 +69,7 @@ func createOptions(userName string, displayName string) registerOptions {
 func AttestationOptions(req UserRequest) (registerOptions, error) {
 	options := createOptions(req.UserName, req.DisplayName)
 
-	if err := db.InsertDB(options.Challenge, options.User.Id); err != nil {
+	if err := db.InsertChallenge(options.Challenge, options.User.Id); err != nil {
 		return registerOptions{}, err
 	}
 
@@ -163,7 +163,12 @@ func AttestationResult(create NavigatorCreate) error {
 		return err
 	}
 
-	// TODO: 公開鍵の作成
+	// 公開鍵の作成
+	publicKey, err := parsePublicKey(authData.attestedCredentialData.credentialPublicKey)
+	if err != nil {
+		return err
+	}
+	fmt.Println(publicKey)
 
 	// TODO: 公開鍵をデータベースに格納
 

@@ -13,45 +13,37 @@ type User struct {
 
 func InitDB() error {
 	db, err := gorm.Open("sqlite3", "users.db")
-	if err != nil {
-		return err
-	}
-	db.AutoMigrate((&User{}))
 	defer db.Close()
-	return nil
-}
-
-func InsertDB(challenge string, id string) error {
-	db, err := gorm.Open("sqlite3", "users.db")
 	if err != nil {
 		return err
 	}
-	db.Create(&User{Challenge: challenge, UserID: id})
+	if err := db.AutoMigrate((&User{})).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func InsertChallenge(challenge string, id string) error {
+	db, err := gorm.Open("sqlite3", "users.db")
 	defer db.Close()
-	return nil
-}
-
-func DeleteDB(challenge string) error {
-	db, err := gorm.Open("sqlite3", "users.db")
 	if err != nil {
 		return err
 	}
-	var user User
-	user.Challenge = challenge
-	db.First(&user)
-	db.Delete(&user)
-	db.Close()
+	if err := db.Create(&User{Challenge: challenge, UserID: id}).Error; err != nil {
+		return err
+	}
 	return nil
 }
 
-func GetOneDB(challenge string) (User, error) {
+func GetChallenge(challenge string) (User, error) {
 	db, err := gorm.Open("sqlite3", "users.db")
+	defer db.Close()
 	if err != nil {
 		return User{}, err
 	}
 	var user User
-	user.Challenge = challenge
-	db.First(&user)
-	db.Close()
+	if err := db.Where("challenge = ?", challenge).Find(&user).Error; err != nil {
+		return User{}, err
+	}
 	return user, nil
 }

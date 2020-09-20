@@ -9,9 +9,9 @@ import (
 )
 
 func verifyChallenge(challenge string) error {
-	user, err := db.GetOneDB(challenge)
+	user, err := db.GetChallenge(challenge)
 	if err != nil {
-		return fmt.Errorf(user.Challenge, err.Error())
+		return fmt.Errorf("failed to verify challenge%s %s", user.Challenge, err.Error())
 	}
 	return nil
 }
