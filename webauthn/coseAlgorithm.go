@@ -35,8 +35,6 @@ func parsePublicKey(pubkeyBytes []byte) (interface{}, error) {
 		return nil, err
 	}
 
-	fmt.Println("PublicKey", pubKey)
-
 	switch pubKey.KeyType {
 	case 2:
 		var ePubKey EC2PublicKey

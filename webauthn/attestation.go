@@ -103,14 +103,12 @@ func verifyPackedFormat(att AttestationObject, clientDataHash []byte, authData A
 
 func verifySelfAttestation(alg int64, sig []byte, authData []byte, clientDataHash []byte, pubKey []byte) (bool, error) {
 	sigData := append(authData, clientDataHash...)
-	fmt.Println(sigData)
 
 	// 公開鍵を作成する
 	publicKey, err := parsePublicKey(pubKey)
 	if err != nil {
 		return false, err
 	}
-	fmt.Println(publicKey)
 
 	// 署名を検証する
 	switch publicKey.(type) {
@@ -127,7 +125,6 @@ func AttestationResult(create NavigatorCreate) error {
 	if err != nil {
 		return err
 	}
-	// fmt.Println(*clientDataJSON)
 
 	// challengeの検証
 	if err := verifyChallenge(*&clientDataJSON.Challenge); err != nil {
@@ -139,11 +136,9 @@ func AttestationResult(create NavigatorCreate) error {
 	if err != nil {
 		return err
 	}
-	// fmt.Println(attestationObject)
 
 	// authenticatorDataのパース
 	authData := parseAuthData(attestationObject.AuthData)
-	// fmt.Println(authData)
 
 	// Attestationの検証
 	clientData, err := base64.RawURLEncoding.DecodeString(create.Create.Response.ClientDataJSON)
@@ -169,9 +164,8 @@ func AttestationResult(create NavigatorCreate) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(publicKey)
 
-	// TODO: 公開鍵をデータベースに格納
+	// 公開鍵をデータベースに格納
 	switch publicKey.(type) {
 	case EC2PublicKey:
 		e := publicKey.(EC2PublicKey)
