@@ -3,6 +3,7 @@ package webauthn
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
 	"github.com/YutoOkawa/goFIDOServer/db"
@@ -171,6 +172,19 @@ func AttestationResult(create NavigatorCreate) error {
 	fmt.Println(publicKey)
 
 	// TODO: 公開鍵をデータベースに格納
+	switch publicKey.(type) {
+	case EC2PublicKey:
+		e := publicKey.(EC2PublicKey)
+		ec2Bytes, err := json.Marshal(e)
+		if err != nil {
+			return err
+		}
+		if err := db.InsertPublicKey(create.UserName, ec2Bytes); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("Not Implemented Error")
+	}
 
 	return nil
 }
