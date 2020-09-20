@@ -56,14 +56,18 @@ func GetChallenge(challenge string) (User, error) {
 	return user, nil
 }
 
-func InsertPublicKey(id string, pubkey []byte) error {
+func InsertPublicKey(id string, pubkeyJSON []byte) error {
 	db, err := gorm.Open("sqlite3", "users.db")
 	defer db.Close()
 	if err != nil {
 		return err
 	}
-	if err := db.Create(&Publickey{Id: id, Publickey: pubkey}).Error; err != nil {
-		return err
+	publickey := &Publickey{Id: id, Publickey: pubkeyJSON}
+	if err := db.Create(publickey).Error; err != nil {
+		var oldPubkey Publickey
+		if err := db.Where("id = ?", id).Find(&oldPubkey).Update(&publickey).Error; err != nil {
+			return err
+		}
 	}
 	return nil
 }
