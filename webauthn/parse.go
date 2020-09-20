@@ -37,7 +37,7 @@ type AttestedCredentialData struct {
 func parseClientDataJSON(rawClientDataJSON string) (*ClientDataJSON, error) {
 	var clientDataJSON ClientDataJSON
 
-	clientDataJSONBin, err := base64.RawStdEncoding.DecodeString(rawClientDataJSON)
+	clientDataJSONBin, err := base64.RawURLEncoding.DecodeString(rawClientDataJSON)
 	if err != nil {
 		return nil, err
 	}
