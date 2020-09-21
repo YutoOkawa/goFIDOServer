@@ -12,7 +12,8 @@ type User struct {
 }
 
 type Publickey struct {
-	Id        string `gorm:"primaryKey"`
+	Keyid     string `gorm:"primaryKey"`
+	Userid    string
 	Publickey []byte
 }
 
@@ -56,18 +57,15 @@ func GetChallenge(challenge string) (User, error) {
 	return user, nil
 }
 
-func InsertPublicKey(id string, pubkeyJSON []byte) error {
+func InsertPublicKey(keyID string, userID string, pubkeyJSON []byte) error {
 	db, err := gorm.Open("sqlite3", "users.db")
 	defer db.Close()
 	if err != nil {
 		return err
 	}
-	publickey := &Publickey{Id: id, Publickey: pubkeyJSON}
+	publickey := &Publickey{Keyid: keyID, Userid: userID, Publickey: pubkeyJSON}
 	if err := db.Create(publickey).Error; err != nil {
-		var oldPubkey Publickey
-		if err := db.Where("id = ?", id).Find(&oldPubkey).Update(&publickey).Error; err != nil {
-			return err
-		}
+		return err
 	}
 	return nil
 }

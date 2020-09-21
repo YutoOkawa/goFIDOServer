@@ -173,7 +173,7 @@ func AttestationResult(create NavigatorCreate) error {
 		if err != nil {
 			return err
 		}
-		if err := db.InsertPublicKey(create.UserName, ec2Bytes); err != nil {
+		if err := db.InsertPublicKey(create.Create.Id, create.UserName, ec2Bytes); err != nil {
 			return err
 		}
 	default:
