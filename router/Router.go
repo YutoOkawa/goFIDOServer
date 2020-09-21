@@ -28,21 +28,9 @@ func (s *Server) SetRouter() {
 	s.Router.Route("/attestation", func(register chi.Router) {
 		register.Post("/options", AttestationOptions)
 		register.Post("/result", AttestationResult)
-		// register.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		// 	if err := db.InsertDB("aa", "test"); err != nil {
-		// 		log.Fatal(err)
-		// 	}
-		// 	if err := db.InsertDB("aaa", "test1"); err != nil {
-		// 		log.Fatal(err)
-		// 	}
-		// 	user, err := db.GetOneDB("aaa")
-		// 	if err != nil {
-		// 		log.Fatal(err)
-		// 	}
-		// 	w.Write([]byte(user.UserID))
-		// 	// if err := db.DeleteDB("aa"); err != nil {
-		// 	// 	log.Fatal(err)
-		// 	// }
-		// })
+	})
+
+	s.Router.Route("/assertion", func(auth chi.Router) {
+		auth.Post("/options", AssertionOptions)
 	})
 }
