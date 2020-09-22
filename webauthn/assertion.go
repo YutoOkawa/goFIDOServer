@@ -21,6 +21,21 @@ type authOptions struct {
 	Timeout          int               `json:"timeout"`
 }
 
+type NavigatorGet struct {
+	UserName string `json:"username"`
+	Get      struct {
+		Id       string `json:"id"`
+		RawId    string `json:"rawId"`
+		Type     string `json:"type"`
+		Response struct {
+			AuthenticatorData string `json:"authenticatorData"`
+			ClientDataJSON    string `json:"clientDataJSON"`
+			Signature         string `json:"signature"`
+			UserHandle        string `json:"userHandle"`
+		} `json:"response"`
+	} `json:"get"`
+}
+
 func createAssertionOptions(userID string) (authOptions, string, error) {
 	var options authOptions
 	options.Challenge = makeRandom(config.ChallengeSize)

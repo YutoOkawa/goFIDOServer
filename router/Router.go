@@ -32,5 +32,6 @@ func (s *Server) SetRouter() {
 
 	s.Router.Route("/assertion", func(auth chi.Router) {
 		auth.Post("/options", AssertionOptions)
+		auth.Post("/result", AssertionResult)
 	})
 }
