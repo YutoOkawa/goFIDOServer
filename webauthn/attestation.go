@@ -165,6 +165,13 @@ func AttestationResult(create NavigatorCreate) error {
 		return err
 	}
 
+	// challengeからユーザIDを取得
+	user, err := db.GetChallenge(*&clientDataJSON.Challenge)
+	if err != nil {
+		return err
+	}
+	userId := user.Id
+
 	// 公開鍵をデータベースに格納
 	switch publicKey.(type) {
 	case EC2PublicKey:
@@ -173,7 +180,7 @@ func AttestationResult(create NavigatorCreate) error {
 		if err != nil {
 			return err
 		}
-		if err := db.InsertPublicKey(create.Create.Id, create.UserName, ec2Bytes); err != nil {
+		if err := db.InsertPublicKey(create.Create.Id, userId, create.UserName, ec2Bytes); err != nil {
 			return err
 		}
 	default:
