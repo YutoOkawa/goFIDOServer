@@ -21,18 +21,18 @@ type authOptions struct {
 	Timeout          int               `json:"timeout"`
 }
 
-func createAssertionOptions(userID string) (authOptions, error) {
+func createAssertionOptions(userID string) (authOptions, string, error) {
 	var options authOptions
 	options.Challenge = makeRandom(config.ChallengeSize)
 	options.RpId = config.RpId
-	options.UserVerification = "require"
+	options.UserVerification = "required"
 	options.Timeout = config.Timeout
 
 	pubkey, err := db.GetPublicKey(userID)
 	if err != nil {
 		options.Status = "ng"
 		options.ErrorMessage = err.Error()
-		return options, err
+		return options, "", err
 	}
 
 	options.AllowCredentials = make([]AllowCredential, 1)
@@ -41,17 +41,17 @@ func createAssertionOptions(userID string) (authOptions, error) {
 
 	options.Status = "ok"
 	options.ErrorMessage = ""
-	return options, nil
+	return options, pubkey.Userid, nil
 }
 
 func AssertionOptions(req AuthUserRequest) (authOptions, error) {
-	options, err := createAssertionOptions(req.UserName)
+	options, userId, err := createAssertionOptions(req.UserName)
 	if err != nil {
 		return options, err
 	}
 
 	// TODO: IDがユニーク制約に引っかかることを解消
-	if err := db.InsertChallenge(options.Challenge, req.UserName); err != nil {
+	if err := db.InsertChallenge(options.Challenge, userId); err != nil {
 		return authOptions{}, err
 	}
 	return options, nil

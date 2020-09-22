@@ -79,7 +79,7 @@ func GetPublicKey(userID string) (Publickey, error) {
 	}
 
 	var pubkey Publickey
-	if err := db.Where("userid = ?", userID).Find(&pubkey).Error; err != nil {
+	if err := db.Where("username = ?", userID).Find(&pubkey).Error; err != nil {
 		return Publickey{}, err
 	}
 	return pubkey, nil
