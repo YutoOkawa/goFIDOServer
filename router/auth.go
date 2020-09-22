@@ -9,6 +9,10 @@ import (
 	"github.com/YutoOkawa/goFIDOServer/webauthn"
 )
 
+type ErrorMessage struct {
+	Message string `json:"ErrorMessage"`
+}
+
 func AssertionOptions(w http.ResponseWriter, r *http.Request) {
 	var req webauthn.AuthUserRequest
 
@@ -20,9 +24,11 @@ func AssertionOptions(w http.ResponseWriter, r *http.Request) {
 
 	options, err := webauthn.AssertionOptions(req)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err.Error())
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(&ErrorMessage{Message: err.Error()})
+	} else {
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(options)
 	}
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(options)
 }

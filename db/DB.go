@@ -69,3 +69,17 @@ func InsertPublicKey(keyID string, userID string, pubkeyJSON []byte) error {
 	}
 	return nil
 }
+
+func GetPublicKey(userID string) (Publickey, error) {
+	db, err := gorm.Open("sqlite3", "users.db")
+	defer db.Close()
+	if err != nil {
+		return Publickey{}, err
+	}
+
+	var pubkey Publickey
+	if err := db.Where("userid = ?", userID).Find(&pubkey).Error; err != nil {
+		return Publickey{}, err
+	}
+	return pubkey, nil
+}
