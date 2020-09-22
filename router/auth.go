@@ -44,7 +44,9 @@ func AssertionResult(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	fmt.Println(req)
+	if err = webauthn.AssertionResult(req); err != nil {
+		fmt.Println(err)
+	}
 
 	if err != nil {
 		res.Code = -1

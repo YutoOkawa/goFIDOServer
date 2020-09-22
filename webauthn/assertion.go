@@ -71,3 +71,21 @@ func AssertionOptions(req AuthUserRequest) (authOptions, error) {
 	}
 	return options, nil
 }
+
+func AssertionResult(get NavigatorGet) error {
+	// TODO: clientDataJSONのデコード
+
+	// TODO: challengeの検証
+
+	// TODO: authenticatorDataのデコード
+
+	// TODO: 各種パラメータの検証
+
+	// TODO: 公開鍵の取得
+
+	// TODO: 署名検証
+
+	// TODO: 認証回数の更新
+
+	return nil
+}
