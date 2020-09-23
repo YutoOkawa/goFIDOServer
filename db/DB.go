@@ -58,6 +58,22 @@ func GetChallenge(challenge string) (User, error) {
 	return user, nil
 }
 
+func DeleteChallenge(challenge string) error {
+	db, err := gorm.Open("sqlite3", "users.db")
+	defer db.Close()
+	if err != nil {
+		return err
+	}
+	user, err := GetChallenge(challenge)
+	if err != nil {
+		return err
+	}
+	if err := db.Delete(&user).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 func InsertPublicKey(keyID string, userID string, userName string, pubkeyJSON []byte) error {
 	db, err := gorm.Open("sqlite3", "users.db")
 	defer db.Close()

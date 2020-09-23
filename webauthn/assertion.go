@@ -1,6 +1,12 @@
 package webauthn
 
-import "github.com/YutoOkawa/goFIDOServer/db"
+import (
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
+
+	"github.com/YutoOkawa/goFIDOServer/db"
+)
 
 type AuthUserRequest struct {
 	UserName string `json:"username"`
@@ -65,27 +71,73 @@ func AssertionOptions(req AuthUserRequest) (authOptions, error) {
 		return options, err
 	}
 
-	// TODO: IDがユニーク制約に引っかかることを解消
 	if err := db.InsertChallenge(options.Challenge, userId); err != nil {
 		return authOptions{}, err
 	}
 	return options, nil
 }
 
+func DeleteChallenge(challenge string, retErr error) error {
+	if err := db.DeleteChallenge(challenge); err != nil {
+		return err
+	}
+
+	return retErr
+}
+
 func AssertionResult(get NavigatorGet) error {
-	// TODO: clientDataJSONのデコード
+	// clientDataJSONのデコード
+	clientDataJSON, err := parseClientDataJSON(get.Get.Response.ClientDataJSON)
+	if err != nil {
+		return err
+	}
 
-	// TODO: challengeの検証
+	// challengeの検証
+	if err := verifyChallenge(*&clientDataJSON.Challenge); err != nil {
+		return DeleteChallenge(clientDataJSON.Challenge, err)
+	}
 
-	// TODO: authenticatorDataのデコード
+	// authenticatorDataのデコード
+	authDataBin, err := base64.RawURLEncoding.DecodeString(get.Get.Response.AuthenticatorData)
+	if err != nil {
+		return DeleteChallenge(clientDataJSON.Challenge, err)
+	}
+	authData := parseAuthData(authDataBin, false)
 
-	// TODO: 各種パラメータの検証
+	// 各種パラメータの検証
+	if err := verifyParameters(*clientDataJSON, authData, "webauthn.get"); err != nil {
+		return DeleteChallenge(clientDataJSON.Challenge, err)
+	}
 
-	// TODO: 公開鍵の取得
+	// 公開鍵の取得
+	pubkeyData, err := db.GetPublicKey(get.UserName)
+	if err != nil {
+		return DeleteChallenge(clientDataJSON.Challenge, err)
+	}
+	var pubkey interface{}
+	if err := json.Unmarshal(pubkeyData.Publickey, &pubkey); err != nil {
+		return DeleteChallenge(clientDataJSON.Challenge, err)
+	}
 
-	// TODO: 署名検証
+	// 署名検証
+	clientData, err := base64.RawStdEncoding.DecodeString(get.Get.Response.ClientDataJSON)
+	clientDataHash := sha256.Sum256(clientData)
+	sigData := append(authDataBin, clientDataHash[:]...)
+	signature, err := base64.RawURLEncoding.DecodeString(get.Get.Response.Signature)
+	if err != nil {
+		return DeleteChallenge(clientDataJSON.Challenge, err)
+	}
+
+	switch pubkey.(type) {
+	case EC2PublicKey:
+		e := pubkey.(EC2PublicKey)
+		check, err := e.Verify(signature, sigData)
+		if !check && err != nil {
+			return DeleteChallenge(clientDataJSON.Challenge, err)
+		}
+	}
 
 	// TODO: 認証回数の更新
 
-	return nil
+	return DeleteChallenge(clientDataJSON.Challenge, nil)
 }
