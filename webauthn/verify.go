@@ -16,7 +16,7 @@ func verifyChallenge(challenge string) error {
 	return nil
 }
 
-func verifyParameters(clientDataJSON ClientDataJSON, authData AuthData) error {
+func verifyParameters(clientDataJSON ClientDataJSON, authData AuthData, webauthnType string) error {
 	// TODO: 各種パラメータの検証
 	// 1:originの検証
 	if clientDataJSON.Origin != config.RpOrigin {
@@ -30,7 +30,7 @@ func verifyParameters(clientDataJSON ClientDataJSON, authData AuthData) error {
 	}
 
 	// 3:typeの検証
-	if *&clientDataJSON.Type != "webauthn.create" {
+	if *&clientDataJSON.Type != webauthnType {
 		return fmt.Errorf("failed to check type!")
 	}
 

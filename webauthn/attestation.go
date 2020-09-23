@@ -155,7 +155,7 @@ func AttestationResult(create NavigatorCreate) error {
 	}
 
 	// 各種パラメータの検証
-	if err := verifyParameters(*clientDataJSON, authData); err != nil {
+	if err := verifyParameters(*clientDataJSON, authData, "webauthn.create"); err != nil {
 		return err
 	}
 
