@@ -138,7 +138,7 @@ func AttestationResult(create NavigatorCreate) error {
 	}
 
 	// authenticatorDataのパース
-	authData := parseAuthData(attestationObject.AuthData)
+	authData := parseAuthData(attestationObject.AuthData, true)
 
 	// Attestationの検証
 	clientData, err := base64.RawURLEncoding.DecodeString(create.Create.Response.ClientDataJSON)

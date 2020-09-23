@@ -66,21 +66,22 @@ func parseAttestationObject(rawAttestationObject string) (*AttestationObject, er
 	return &attestationObject, nil
 }
 
-func parseAuthData(authData []byte) AuthData {
+func parseAuthData(authData []byte, isKey bool) AuthData {
 	parseAuthData := AuthData{}
 	parseAuthData.rpIDHash = authData[:32]
 	parseAuthData.flags = authData[32]
 	signCount := authData[33:37]
 	parseAuthData.signCount = binary.BigEndian.Uint32(signCount)
 
-	parseAttestedCred := AttestedCredentialData{}
-	parseAttestedCred.aaguid = authData[37:53]
-	credIDLen := authData[53:55]
-	parseAttestedCred.credIDLen = binary.BigEndian.Uint16(credIDLen)
-	parseAttestedCred.credID = authData[55 : 55+parseAttestedCred.credIDLen]
-	parseAttestedCred.credentialPublicKey = authData[55+parseAttestedCred.credIDLen:]
-
-	parseAuthData.attestedCredentialData = parseAttestedCred
+	if isKey {
+		parseAttestedCred := AttestedCredentialData{}
+		parseAttestedCred.aaguid = authData[37:53]
+		credIDLen := authData[53:55]
+		parseAttestedCred.credIDLen = binary.BigEndian.Uint16(credIDLen)
+		parseAttestedCred.credID = authData[55 : 55+parseAttestedCred.credIDLen]
+		parseAttestedCred.credentialPublicKey = authData[55+parseAttestedCred.credIDLen:]
+		parseAuthData.attestedCredentialData = parseAttestedCred
+	}
 
 	return parseAuthData
 }
