@@ -8,6 +8,17 @@ import (
 	"github.com/YutoOkawa/goFIDOServer/db"
 )
 
+const (
+	UserPresentFlag byte = 1 << iota
+	_
+	UserVerifiedFlag
+	_
+	_
+	_
+	AttestedCredentialDataFlag
+	ExtenstionDataFlag
+)
+
 func verifyChallenge(challenge string) error {
 	user, err := db.GetChallenge(challenge)
 	if err != nil {
