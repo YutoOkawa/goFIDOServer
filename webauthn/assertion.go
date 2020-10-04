@@ -105,7 +105,7 @@ func AssertionResult(get NavigatorGet) error {
 	if err != nil {
 		return DeleteChallenge(clientDataJSON.Challenge, err)
 	}
-	authData := parseAuthData(authDataBin, false)
+	authData := parseAuthData(authDataBin)
 
 	// 各種パラメータの検証
 	if err := verifyParameters(*clientDataJSON, authData, "webauthn.get"); err != nil {

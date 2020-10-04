@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 
 	"github.com/fxamacker/cbor"
 )
@@ -66,14 +67,14 @@ func parseAttestationObject(rawAttestationObject string) (*AttestationObject, er
 	return &attestationObject, nil
 }
 
-func parseAuthData(authData []byte, isKey bool) AuthData {
+func parseAuthData(authData []byte) AuthData {
 	parseAuthData := AuthData{}
 	parseAuthData.rpIDHash = authData[:32]
 	parseAuthData.flags = AuthenticatorFlag(authData[32])
 	signCount := authData[33:37]
 	parseAuthData.signCount = binary.BigEndian.Uint32(signCount)
 
-	if isKey {
+	if parseAuthData.flags.HasAttestedCredentialData() {
 		parseAttestedCred := AttestedCredentialData{}
 		parseAttestedCred.aaguid = authData[37:53]
 		credIDLen := authData[53:55]
@@ -81,6 +82,10 @@ func parseAuthData(authData []byte, isKey bool) AuthData {
 		parseAttestedCred.credID = authData[55 : 55+parseAttestedCred.credIDLen]
 		parseAttestedCred.credentialPublicKey = authData[55+parseAttestedCred.credIDLen:]
 		parseAuthData.attestedCredentialData = parseAttestedCred
+	}
+
+	if parseAuthData.flags.HasExtensionData() {
+		fmt.Errorf("Not Implemented Error.")
 	}
 
 	return parseAuthData
