@@ -13,8 +13,9 @@ type AuthUserRequest struct {
 }
 
 type AllowCredential struct {
-	Id   string `json:"id"`
-	Type string `json:"type"`
+	Id        string   `json:"id"`
+	Type      string   `json:"type"`
+	Transport []string `json:"transports"`
 }
 
 type authOptions struct {
@@ -59,6 +60,8 @@ func createAssertionOptions(userID string) (authOptions, string, error) {
 	options.AllowCredentials = make([]AllowCredential, 1)
 	options.AllowCredentials[0].Id = pubkey.Keyid
 	options.AllowCredentials[0].Type = "public-key"
+	options.AllowCredentials[0].Transport = make([]string, 4)
+	options.AllowCredentials[0].Transport = []string{"usb", "internal"}
 
 	options.Status = "ok"
 	options.ErrorMessage = ""
