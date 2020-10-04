@@ -8,8 +8,10 @@ import (
 	"github.com/YutoOkawa/goFIDOServer/db"
 )
 
+type AuthenticatorFlag byte
+
 const (
-	UserPresentFlag byte = 1 << iota
+	UserPresentFlag AuthenticatorFlag = 1 << iota
 	_
 	UserVerifiedFlag
 	_
@@ -18,6 +20,22 @@ const (
 	AttestedCredentialDataFlag
 	ExtenstionDataFlag
 )
+
+func (flag AuthenticatorFlag) VerifyUserPresent() bool {
+	return (flag & UserPresentFlag) == UserPresentFlag
+}
+
+func (flag AuthenticatorFlag) VerifyUserVerified() bool {
+	return (flag & UserVerifiedFlag) == UserVerifiedFlag
+}
+
+func (flag AuthenticatorFlag) HasAttestedCredentialData() bool {
+	return (flag & AttestedCredentialDataFlag) == AttestedCredentialDataFlag
+}
+
+func (flag AuthenticatorFlag) HasExtensionData() bool {
+	return (flag & ExtenstionDataFlag) == ExtenstionDataFlag
+}
 
 func verifyChallenge(challenge string) error {
 	user, err := db.GetChallenge(challenge)

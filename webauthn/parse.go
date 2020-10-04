@@ -22,7 +22,7 @@ type AttestationObject struct {
 
 type AuthData struct {
 	rpIDHash               []byte
-	flags                  byte
+	flags                  AuthenticatorFlag
 	signCount              uint32
 	attestedCredentialData AttestedCredentialData
 }
@@ -69,7 +69,7 @@ func parseAttestationObject(rawAttestationObject string) (*AttestationObject, er
 func parseAuthData(authData []byte, isKey bool) AuthData {
 	parseAuthData := AuthData{}
 	parseAuthData.rpIDHash = authData[:32]
-	parseAuthData.flags = authData[32]
+	parseAuthData.flags = AuthenticatorFlag(authData[32])
 	signCount := authData[33:37]
 	parseAuthData.signCount = binary.BigEndian.Uint32(signCount)
 
