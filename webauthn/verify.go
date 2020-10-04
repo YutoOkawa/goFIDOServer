@@ -46,7 +46,7 @@ func verifyChallenge(challenge string) error {
 }
 
 func verifyParameters(clientDataJSON ClientDataJSON, authData AuthData, webauthnType string) error {
-	// TODO: 各種パラメータの検証
+	// 各種パラメータの検証
 	// 1:originの検証
 	if clientDataJSON.Origin != config.RpOrigin {
 		return fmt.Errorf("failed to check origin!")
@@ -64,5 +64,12 @@ func verifyParameters(clientDataJSON ClientDataJSON, authData AuthData, webauthn
 	}
 
 	// 4:flagsの検証
+	if !(authData.flags.VerifyUserPresent()) {
+		return fmt.Errorf("failed to Verify UserPresent.")
+	}
+
+	if !(authData.flags.VerifyUserPresent()) {
+		return fmt.Errorf("failed to Verify UserPresent.")
+	}
 	return nil
 }
