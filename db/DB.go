@@ -18,6 +18,12 @@ type Publickey struct {
 	Publickey []byte
 }
 
+type Userdata struct {
+	Userid    string `gorm:"primaryKey"`
+	Username  string
+	Signcount uint32
+}
+
 func InitDB() error {
 	db, err := gorm.Open("sqlite3", "users.db")
 	defer db.Close()
@@ -28,6 +34,9 @@ func InitDB() error {
 		return err
 	}
 	if err := db.AutoMigrate(&Publickey{}).Error; err != nil {
+		return err
+	}
+	if err := db.AutoMigrate(&Userdata{}).Error; err != nil {
 		return err
 	}
 	return nil
@@ -99,4 +108,49 @@ func GetPublicKey(userID string) (Publickey, error) {
 		return Publickey{}, err
 	}
 	return pubkey, nil
+}
+
+func InsertUserData(userID string, userName string, signCount uint32) error {
+	db, err := gorm.Open("sqlite3", "users.db")
+	defer db.Close()
+	if err != nil {
+		return err
+	}
+	userData := &Userdata{Userid: userID, Username: userName, Signcount: signCount}
+	if err := db.Create(userData).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetUserData(userID string) (Userdata, error) {
+	db, err := gorm.Open("sqlite3", "users.db")
+	defer db.Close()
+	if err != err {
+		return Userdata{}, err
+	}
+
+	var userdata Userdata
+	if err := db.Where("userid = ?", userID).Find(&userdata).Error; err != nil {
+		return Userdata{}, err
+	}
+	return userdata, nil
+}
+
+func UpdateSignCount(userID string, signCount uint32) error {
+	db, err := gorm.Open("sqlite3", "users.db")
+	defer db.Close()
+	if err != nil {
+		return err
+	}
+
+	var userData Userdata
+	if err := db.Where("userid = ?", userID).Find(&userData).Error; err != nil {
+		return err
+	}
+
+	if err := db.Model(&userData).Update("signcount", signCount).Error; err != nil {
+		return err
+	}
+	return nil
 }

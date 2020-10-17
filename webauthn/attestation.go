@@ -187,5 +187,12 @@ func AttestationResult(create NavigatorCreate) error {
 		return fmt.Errorf("Not Implemented Error")
 	}
 
+	// 認証回数を格納
+	if err := db.InsertUserData(userId, create.UserName, authData.signCount); err != nil {
+		if err := db.UpdateSignCount(userId, authData.signCount); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

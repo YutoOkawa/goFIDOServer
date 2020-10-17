@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 
 	"github.com/YutoOkawa/goFIDOServer/db"
 )
@@ -140,7 +141,25 @@ func AssertionResult(get NavigatorGet) error {
 		}
 	}
 
-	// TODO: 認証回数の更新
+	// challengeからユーザIDを取得
+	user, err := db.GetChallenge(*&clientDataJSON.Challenge)
+	if err != nil {
+		return err
+	}
+	userId := user.Id
+
+	// 認証回数の検証
+	userData, err := db.GetUserData(userId)
+	if err != nil {
+		return DeleteChallenge(clientDataJSON.Challenge, err)
+	}
+	if userData.Signcount > authData.signCount {
+		return DeleteChallenge(clientDataJSON.Challenge, fmt.Errorf("failed to verify SignCount"))
+	}
+	// 認証回数の更新
+	if err := db.UpdateSignCount(userId, authData.signCount); err != nil {
+		return DeleteChallenge(clientDataJSON.Challenge, err)
+	}
 
 	return DeleteChallenge(clientDataJSON.Challenge, nil)
 }
