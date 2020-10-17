@@ -170,7 +170,7 @@ func AttestationResult(create NavigatorCreate) error {
 	if err != nil {
 		return err
 	}
-	userId := user.Id
+	userId := user.Userid
 
 	// 公開鍵をデータベースに格納
 	switch publicKey.(type) {

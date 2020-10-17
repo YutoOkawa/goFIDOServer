@@ -6,9 +6,9 @@ import (
 )
 
 type User struct {
-	// gorm.Model
-	Challenge string `gorm:"primaryKey"`
-	Id        string
+	gorm.Model
+	Challenge string
+	Userid    string
 }
 
 type Publickey struct {
@@ -48,7 +48,7 @@ func InsertChallenge(challenge string, id string) error {
 	if err != nil {
 		return err
 	}
-	if err := db.Create(&User{Challenge: challenge, Id: id}).Error; err != nil {
+	if err := db.Create(&User{Challenge: challenge, Userid: id}).Error; err != nil {
 		return err
 	}
 	return nil
@@ -144,12 +144,7 @@ func UpdateSignCount(userID string, signCount uint32) error {
 		return err
 	}
 
-	var userData Userdata
-	if err := db.Where("userid = ?", userID).Find(&userData).Error; err != nil {
-		return err
-	}
-
-	if err := db.Model(&userData).Update("signcount", signCount).Error; err != nil {
+	if err := db.Model(&Userdata{}).Where("userid = ?", userID).Update("signcount", signCount).Error; err != nil {
 		return err
 	}
 	return nil

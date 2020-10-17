@@ -81,14 +81,6 @@ func AssertionOptions(req AuthUserRequest) (authOptions, error) {
 	return options, nil
 }
 
-func DeleteChallenge(challenge string, retErr error) error {
-	if err := db.DeleteChallenge(challenge); err != nil {
-		return err
-	}
-
-	return retErr
-}
-
 func AssertionResult(get NavigatorGet) error {
 	// clientDataJSONのデコード
 	clientDataJSON, err := parseClientDataJSON(get.Get.Response.ClientDataJSON)
@@ -98,29 +90,29 @@ func AssertionResult(get NavigatorGet) error {
 
 	// challengeの検証
 	if err := verifyChallenge(*&clientDataJSON.Challenge); err != nil {
-		return DeleteChallenge(clientDataJSON.Challenge, err)
+		return err
 	}
 
 	// authenticatorDataのデコード
 	authDataBin, err := base64.RawURLEncoding.DecodeString(get.Get.Response.AuthenticatorData)
 	if err != nil {
-		return DeleteChallenge(clientDataJSON.Challenge, err)
+		return err
 	}
 	authData := parseAuthData(authDataBin)
 
 	// 各種パラメータの検証
 	if err := verifyParameters(*clientDataJSON, authData, "webauthn.get"); err != nil {
-		return DeleteChallenge(clientDataJSON.Challenge, err)
+		return err
 	}
 
 	// 公開鍵の取得
 	pubkeyData, err := db.GetPublicKey(get.UserName)
 	if err != nil {
-		return DeleteChallenge(clientDataJSON.Challenge, err)
+		return err
 	}
 	var pubkey interface{}
 	if err := json.Unmarshal(pubkeyData.Publickey, &pubkey); err != nil {
-		return DeleteChallenge(clientDataJSON.Challenge, err)
+		return err
 	}
 
 	// 署名検証
@@ -129,7 +121,7 @@ func AssertionResult(get NavigatorGet) error {
 	sigData := append(authDataBin, clientDataHash[:]...)
 	signature, err := base64.RawURLEncoding.DecodeString(get.Get.Response.Signature)
 	if err != nil {
-		return DeleteChallenge(clientDataJSON.Challenge, err)
+		return err
 	}
 
 	switch pubkey.(type) {
@@ -137,7 +129,7 @@ func AssertionResult(get NavigatorGet) error {
 		e := pubkey.(EC2PublicKey)
 		check, err := e.Verify(signature, sigData)
 		if !check && err != nil {
-			return DeleteChallenge(clientDataJSON.Challenge, err)
+			return err
 		}
 	}
 
@@ -146,20 +138,20 @@ func AssertionResult(get NavigatorGet) error {
 	if err != nil {
 		return err
 	}
-	userId := user.Id
+	userId := user.Userid
 
 	// 認証回数の検証
 	userData, err := db.GetUserData(userId)
 	if err != nil {
-		return DeleteChallenge(clientDataJSON.Challenge, err)
+		return err
 	}
 	if userData.Signcount > authData.signCount {
-		return DeleteChallenge(clientDataJSON.Challenge, fmt.Errorf("failed to verify SignCount"))
+		return fmt.Errorf("failed to verify SignCount")
 	}
 	// 認証回数の更新
 	if err := db.UpdateSignCount(userId, authData.signCount); err != nil {
-		return DeleteChallenge(clientDataJSON.Challenge, err)
+		return err
 	}
 
-	return DeleteChallenge(clientDataJSON.Challenge, nil)
+	return nil
 }
