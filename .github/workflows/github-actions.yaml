@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - master
+      - develop
 jobs:
   unit-test:
     runs-on: ubuntu-latest
